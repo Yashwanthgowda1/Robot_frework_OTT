@@ -1,0 +1,22 @@
+{
+    
+    "emulator": {
+        "name": "Pixel_9_Pro_API_30",
+        "platformName": "Android",
+        "platformVersion": "15",
+        "deviceName": "emulator-5554",
+        "automationName": "UiAutomator2",
+        "port": 8000,
+        "newCommandTimeout": 300
+    },
+    "real_device": {
+        "name": "Samsung Galaxy S21",
+        "platformName": "Android",
+        "platformVersion": "12.0",
+        "deviceName": "R58N123ABC",
+        "appPackage": "com.example.app",
+        "appActivity": ".MainActivity",
+        "automationName": "UiAutomator2",
+        "port": 4725
+    }
+}
