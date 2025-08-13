@@ -1,0 +1,9 @@
+{
+"home_page":{
+    "id" : "home_page",
+    "XPATH": "//div[@id='home_page']",
+    "CSS": "#home_page",
+    "name": "Home Page"
+}
+
+}
