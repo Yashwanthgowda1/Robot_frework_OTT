@@ -5,11 +5,11 @@ import time
 import subprocess
 from collections import OrderedDict
 from appium import webdriver
+from appium.options.android import UiAutomator2Options
 from robot.api.deco import keyword
 
 # Path to config.json (kept in project folder)
-CONFIG_PATH = os.path.join("ROBOT_FRAMEWORK", "config.json")
-
+CONFIG_PATH = r"C:\\python_study\\OTT\\Robot_frework_OTT\\config.json"
 
 class SetupUtility:
     def __init__(self):
@@ -31,13 +31,21 @@ class SetupUtility:
 
         # Remove 'port' key from desired capabilities
         caps = {k: v for k, v in device_config.items() if k != "port"}
-        appium_server = f"http://localhost:{port}"
+
+        appium_server = f"http://localhost:{port}/wd/hub"
 
         print(f"\n[INFO] Connecting to {device_type} at {appium_server}")
         print("[INFO] Desired Capabilities:", caps)
 
-        # Connect to Appium driver
-        driver = webdriver.Remote(command_executor=appium_server, desired_capabilities=caps)
+        # ✅ Use UiAutomator2Options for Android
+        options = UiAutomator2Options().load_capabilities(caps)
+
+        driver = webdriver.Remote(
+            command_executor=appium_server,
+            options=options
+        )
+
+        self.driver = driver
         print(f"[INFO] Connected to {device_config.get('name', 'device')}")
         return driver
 
@@ -71,3 +79,8 @@ class SetupUtility:
         )
         time.sleep(8)  # Wait for server to start
         print(f"[INFO] Appium server started at http://localhost:{port}")
+
+
+if __name__ == "__main__":
+    setup_util = SetupUtility()
+    driver = setup_util.connect_device("emulator")

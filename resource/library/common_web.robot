@@ -1,5 +1,10 @@
 *** Settings ***
-Library  ../../resource/keywords/common_web_andriod
-Library  seleniumLibrary
-Library   requestsLibrary
+Library  ../../resource/library/common_web_andriod.py
+
+
+*** Keywords ***
+
+
+
+
 

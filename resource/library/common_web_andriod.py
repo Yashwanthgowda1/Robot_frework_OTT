@@ -3,9 +3,15 @@ from selenium.webdriver.common.by import By
 from appium.webdriver.common.appiumby import AppiumBy
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException, TimeoutException, KeyError, ValueError
 from initialize_browser import InitializeBrowser
 from Setuputility import SetupUtility
 from robot.api.deco import keyword
+
+from robot.libraries.BuiltIn import BuiltIn
+from robot.api import logger
+import os, time
+
 
 driver=None
 def load_locators(file_path):
@@ -25,28 +31,53 @@ def initialize_driver(device_type="web", browser="chrome"):
         raise ValueError(f"Unsupported device type: {device_type}")
     return driver
     
-@keyword("Find Element")
-def find_element(device_type, loactor_dict, locator_key, timeout=10):
-        """Find an element using the specified locator."""
-        global driver
+driver = None
+
+def take_screenshot_on_error(message):
+    """Takes a screenshot and logs it in Robot Framework report."""
+    timestamp = time.strftime("%Y%m%d-%H%M%S")
+    screenshot_name = f"screenshot_{timestamp}.png"
+    screenshot_path = os.path.join(os.getcwd(), screenshot_name)
+
+    if driver:
+        driver.save_screenshot(screenshot_path)
+        logger.error(message)  # Log error message
+        logger.info(
+            f'<a href="{screenshot_name}"><img src="{screenshot_name}" width="800px"></a>',
+            html=True
+        )
+    else:
+        logger.error("Driver not initialized, cannot take screenshot.")
+
+def find_element(device_type, locator_dict, locator_key, timeout=10):
+    """Find an element and handle failures with screenshot logging."""
+    global driver
+    try:
         if driver is None:
-            initialize_driver(device_type)
-        if locator_key not in loactor_dict:
-            raise KeyError(f"Locator '{locator_key}' not found in {loactor_dict}")
-        locator = loactor_dict[locator_key]
-        my_dict={
-            "id": AppiumBy.ID if device_type.lower() in ["android", "real_device","emulator"] else By.ID,
-            "xpath": AppiumBy.XPATH if device_type.lower() in ["android", "real_device", "emulator"] else By.XPATH,
-            "xpath1": AppiumBy.XPATH if device_type.lower() in ["android", "real_device", "emulator"] else By.XPATH,  # same as xpath
-            "css": None if device_type.lower() in ["android", "real_device","emulator"] else By.CSS_SELECTOR,
-            "name": None if device_type.lower() in ["android", "real_device", "emulator"] else By.NAME,
-            "text": AppiumBy.ANDROID_UIAUTOMATOR if device_type.lower() in ["android", "real_device", "emulator"] else None,
-            "content-desc": AppiumBy.ACCESSIBILITY_ID if device_type.lower() in ["android", "real_device", "emulator"] else None
-        }
-        for loc_type_lower,  loc_value in locator.items():
-            if  my_dict[loc_type_lower] and loc_value:
-                if loc_type_lower == "text" and device_type.lower() in ["android", "real_device"]:
-                    loc_value = f'new UiSelector().text("{loc_value}")'
-                return WebDriverWait(driver, timeout).until(EC.presence_of_element_located((my_dict[loc_type_lower], loc_value)))
+            initialize_driver(device_type)  # Make sure you have this implemented
+
+        if locator_key not in locator_dict:
+            raise KeyError(f"Locator '{locator_key}' not found in {locator_dict}")
+
+        locator = locator_dict[locator_key]
+        loc_type = locator[0]
+        loc_value = locator[1]
+
+        loc_type_lower = loc_type.lower()
+        by_type = {
+            "id": AppiumBy.ID,
+            "xpath": AppiumBy.XPATH,
+            "accessibility_id": AppiumBy.ACCESSIBILITY_ID,
+            "class_name": AppiumBy.CLASS_NAME,
+            "android_ui_automator": AppiumBy.ANDROID_UIAUTOMATOR
+        }.get(loc_type_lower)
+
+        if not by_type:
             raise ValueError(f"Unsupported locator type: {loc_type_lower}")
+
+        return driver.find_element(by_type, loc_value)
+
+    except (NoSuchElementException, TimeoutException, KeyError, ValueError) as e:
+        take_screenshot_on_error(f"Error finding element '{locator_key}': {str(e)}")
+        raise e 
 
