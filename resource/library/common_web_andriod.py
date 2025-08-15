@@ -3,10 +3,10 @@ from selenium.webdriver.common.by import By
 from appium.webdriver.common.appiumby import AppiumBy
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException, TimeoutException, KeyError, ValueError
+from selenium.common.exceptions import *
 from initialize_browser import InitializeBrowser
 from Setuputility import SetupUtility
-from robot.api.deco import keyword
+
 
 from robot.libraries.BuiltIn import BuiltIn
 from robot.api import logger
@@ -32,6 +32,8 @@ def initialize_driver(device_type="web", browser="chrome"):
     return driver
     
 driver = None
+
+
 
 def take_screenshot_on_error(message):
     """Takes a screenshot and logs it in Robot Framework report."""
@@ -59,25 +61,30 @@ def find_element(device_type, locator_dict, locator_key, timeout=10):
         if locator_key not in locator_dict:
             raise KeyError(f"Locator '{locator_key}' not found in {locator_dict}")
 
-        locator = locator_dict[locator_key]
-        loc_type = locator[0]
-        loc_value = locator[1]
-
-        loc_type_lower = loc_type.lower()
-        by_type = {
+        locator_all_keypairs = locator_dict[locator_key]
+        
+        by_type_andriod = {
             "id": AppiumBy.ID,
             "xpath": AppiumBy.XPATH,
             "accessibility_id": AppiumBy.ACCESSIBILITY_ID,
             "class_name": AppiumBy.CLASS_NAME,
             "android_ui_automator": AppiumBy.ANDROID_UIAUTOMATOR
-        }.get(loc_type_lower)
-
-        if not by_type:
-            raise ValueError(f"Unsupported locator type: {loc_type_lower}")
-
-        return driver.find_element(by_type, loc_value)
-
-    except (NoSuchElementException, TimeoutException, KeyError, ValueError) as e:
-        take_screenshot_on_error(f"Error finding element '{locator_key}': {str(e)}")
-        raise e 
-
+        }
+        by_type_web = {
+            "id": By.ID,
+            "xpath": By.XPATH,
+            "xpath1": By.XPATH,
+            "text": By.LINK_TEXT,
+            "css": By.CSS_SELECTOR
+        }
+        by_type_choice=by_type_andriod if device_type.lower() in ["android", "real_device", 'emulator'] else by_type_web
+        for loc_key, loc_value in locator_all_keypairs.items():
+            value_of_choicen=by_type_choice.get(loc_key.lower())
+            if value_of_choicen:
+                try:
+                    return driver.find_element(value_of_choicen, loc_value)
+                except Exception:
+                    continue 
+    except Exception as e:
+        take_screenshot_on_error(f"Error finding element '{locator_key}': {e}")
+        raise e

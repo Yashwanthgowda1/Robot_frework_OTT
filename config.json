@@ -1,12 +1,14 @@
 {  
     "emulator": {
-        "name": "Pixel_9_Pro_API_36.0",
+        "name": "Pixel_9_Pro_API_35",
         "platformName": "Android",
         "platformVersion": "15",
         "deviceName": "emulator-5554",
         "automationName": "UiAutomator2",
         "port": 8000,
-        "newCommandTimeout": 300
+        "newCommandTimeout": 300,
+        "appPackage": "com.google.android.youtube",
+        "appActivity": "com.google.android.youtube.HomeActivity"
     },
     "real_device": {
         "name": "Samsung Galaxy S21",
