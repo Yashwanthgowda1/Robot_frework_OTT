@@ -8,10 +8,8 @@ on:
     branches:
       - main
   schedule:
-    # Smoke tests daily at 12:00 AM
-    - cron: "0 0 * * *"
-    # Sanity tests every 2 days at 1:00 AM
-    - cron: "0 1 */2 * *"
+    - cron: "0 0 * * *"   # Smoke tests daily
+    - cron: "0 1 */2 * *" # Sanity tests every 2 days
 
 jobs:
   checkout-code:
@@ -55,23 +53,18 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 33
-          arch: arm64-v8a        # Correct ARM64 architecture
+          arch: arm64-v8a
           force-avd-creation: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio
           disable-animations: true
           emulator-boot-timeout: 300
           script: |
-            echo "Adding Android platform-tools to PATH..."
             echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
-
-            echo "Waiting for any Android emulator to appear..."
             boot_completed=""
             max_wait_minutes=15
             elapsed_seconds=0
-
-            # Wait until an emulator shows up
             while ! adb devices | grep -q emulator; do
-              echo "Waiting for emulator to appear..."
+              echo "Waiting for emulator..."
               sleep 5
               elapsed_seconds=$((elapsed_seconds + 5))
               if [ $elapsed_seconds -ge $((max_wait_minutes*60)) ]; then
@@ -79,27 +72,21 @@ jobs:
                 exit 1
               fi
             done
-
-            # Detect emulator ID dynamically
             EMULATOR_ID=$(adb devices | grep emulator | awk '{print $1}')
-            echo "Emulator ID detected: $EMULATOR_ID"
-
-            # Wait for full boot
+            echo "Emulator ID: $EMULATOR_ID"
             boot_completed=""
             elapsed_seconds=0
             while [ "$boot_completed" != "1" ] && [ $elapsed_seconds -lt $((max_wait_minutes*60)) ]; do
-              echo "Waiting for emulator to fully boot... ($elapsed_seconds seconds elapsed)"
+              echo "Waiting for full boot... ($elapsed_seconds seconds elapsed)"
               sleep 5
               elapsed_seconds=$((elapsed_seconds + 5))
               boot_completed=$(adb -s $EMULATOR_ID shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || echo "")
             done
-
-            if [ "$boot_completed" = "1" ]; then
-              echo "Android Emulator is Ready!"
-            else
+            if [ "$boot_completed" != "1" ]; then
               echo "ERROR: Emulator did not boot within $max_wait_minutes minutes."
               exit 1
             fi
+            echo "Android Emulator is Ready!"
 
   run-tests:
     runs-on: ubuntu-latest
