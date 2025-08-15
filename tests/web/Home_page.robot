@@ -1,6 +1,6 @@
 *** Settings ***
 Library    ../../resource/keywords/common_web_andriod
-Library    SeleniumLibrary
+
 
 
 *** Test Cases ***
