@@ -1,11 +1,11 @@
 from selenium import webdriver
-from robot.api.deco import keyword
+
 
 class InitializeBrowser:
     def __init__(self):
         self.driver = None
 
-    @keyword
+
     def initialize_browser(self, browser_name="chrome"):
         """Initialize a browser session."""
         browser_name = browser_name.lower()
@@ -21,9 +21,19 @@ class InitializeBrowser:
         return self.driver
 
 
-    @keyword
-    def close_browser(self):
-        """Close the browser session."""
-        if self.driver:
-            self.driver.quit()
-            self.driver = None
+
+    # @keyword
+
+ 
+    # def go_to(self, url):
+    #     if self.driver is None:
+    #         raise Exception("Browser is not initialized. Call 'Initialize Browser' first.")
+    #     self.driver.get(url)
+
+
+    # @keyword
+    # def close_browser(self):
+    #     """Close the browser session."""
+    #     if self.driver:
+    #         self.driver.quit()
+    #         self.driver = None
