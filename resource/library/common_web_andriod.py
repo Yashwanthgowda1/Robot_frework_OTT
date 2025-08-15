@@ -6,6 +6,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import *
 from initialize_browser import InitializeBrowser
 from Setuputility import SetupUtility
+from robot.api.deco import keyword
 
 
 from robot.libraries.BuiltIn import BuiltIn
@@ -31,9 +32,6 @@ def initialize_driver(device_type="web", browser="chrome"):
         raise ValueError(f"Unsupported device type: {device_type}")
     return driver
     
-driver = None
-
-
 
 def take_screenshot_on_error(message):
     """Takes a screenshot and logs it in Robot Framework report."""
@@ -88,3 +86,21 @@ def find_element(device_type, locator_dict, locator_key, timeout=10):
     except Exception as e:
         take_screenshot_on_error(f"Error finding element '{locator_key}': {e}")
         raise e
+
+
+@keyword
+def go_to_url(url):
+    """Navigate to the given URL using Selenium driver."""
+    global driver
+    if driver is None:
+        raise Exception("Driver not initialized. Call 'Initialize Driver' first.")
+    driver.get(url)
+
+
+@keyword
+def close_browser():
+    global driver
+    """Close the browser session."""
+    if driver:
+        driver.quit()
+        driver = None
