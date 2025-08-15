@@ -20,7 +20,7 @@ class InitializeBrowser:
         self.driver.maximize_window()
         return self.driver
 
-
+    
 
     # @keyword
 
