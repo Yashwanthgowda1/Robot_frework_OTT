@@ -5,10 +5,11 @@ import time
 import socket
 from collections import OrderedDict
 from appium import webdriver
+# from robot.api.deco import keyword
 
 
 class SetupUtility:
-    def __init__(self, config_path=r"D:\ROBOT_FRAMEWORK\config.json"):
+    def __init__(self, config_path=r"D:\OTT\Robot_frework_OTT\config.json"):
         self.config_path = config_path
         self.driver = None
 
@@ -61,16 +62,17 @@ class SetupUtility:
         print(f"[INFO] Successfully connected to {device_config['name']}")
         return self.driver
 
-    def quit_driver(self):
-        """Quit the driver if it's running."""
-        if self.driver:
-            try:
-                self.driver.quit()
-                print("[INFO] Driver quit successfully.")
-            except Exception as e:
-                print(f"[ERROR] Error while quitting driver: {e}")
-            finally:
-                self.driver = None
+    # @keyword
+    # def quit_driver(self):
+    #     """Quit the driver if it's running."""
+    #     if self.driver:
+    #         try:
+    #             self.driver.quit()
+    #             print("[INFO] Driver quit successfully.")
+    #         except Exception as e:
+    #             print(f"[ERROR] Error while quitting driver: {e}")
+    #         finally:
+    #             self.driver = None
 
 
 if __name__ == "__main__":
