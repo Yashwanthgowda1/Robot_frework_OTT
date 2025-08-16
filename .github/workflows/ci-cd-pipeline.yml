@@ -8,16 +8,14 @@ on:
     branches:
       - main
   schedule:
-    # Smoke tests daily at 12:00 AM
-    - cron: "0 0 * * *"
-    # Sanity tests every 2 days at 1:00 AM
-    - cron: "0 1 */2 * *"
-  workflow_dispatch:  # optional manual trigger
+    - cron: "0 0 * * *"       # Smoke tests daily
+    - cron: "0 1 */2 * *"     # Sanity tests every 2 days
+  workflow_dispatch:           # optional manual trigger
 
-# -----------------------
-# WEB TESTS (GitHub-hosted runner on Ubuntu)
-# -----------------------
 jobs:
+  # -----------------------
+  # WEB TESTS (GitHub-hosted runner on Ubuntu)
+  # -----------------------
   checkout-code-web:
     runs-on: ubuntu-latest
     steps:
@@ -78,84 +76,79 @@ jobs:
           name: sanity-test-results-web
           path: results/
 
-# -----------------------
-# ANDROID TESTS (Self-hosted runner)
-# -----------------------
-setup-android:
-  runs-on: self-hosted
-  steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+  # -----------------------
+  # ANDROID TESTS (Self-hosted runner)
+  # -----------------------
+  setup-android:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Verify Android SDK is installed
-      run: |
-        echo "Checking ANDROID_HOME..."
-        if [ -z "$ANDROID_HOME" ]; then
-          echo "ERROR: ANDROID_HOME is not set. Install SDK first."
-          exit 1
-        fi
-        sdkmanager --list
-
-    - name: Start Emulator if not running
-      run: |
-        DEVICE_NAME="Pixel_9_Pro_API_35"
-        echo "Checking if emulator $DEVICE_NAME is running..."
-        ONLINE_DEVICE=$(adb devices | awk 'NR>1 && $2=="device"{print $1}')
-        if [ -z "$ONLINE_DEVICE" ]; then
-          echo "Starting emulator $DEVICE_NAME..."
-          emulator -avd $DEVICE_NAME -no-window -gpu swiftshader_indirect -noaudio &
-          timeout=300
-          while [ $timeout -gt 0 ]; do
-            BOOT_COMPLETED=$(adb -s emulator-5554 shell getprop sys.boot_completed 2>/dev/null)
-            if [ "$BOOT_COMPLETED" == "1" ]; then
-              echo "Emulator booted!"
-              break
-            fi
-            sleep 5
-            timeout=$((timeout-5))
-          done
-          if [ "$BOOT_COMPLETED" != "1" ]; then
-            echo "ERROR: Emulator did not boot in time"
+      - name: Verify Android SDK is installed
+        run: |
+          echo "Checking ANDROID_HOME..."
+          if [ -z "$ANDROID_HOME" ]; then
+            echo "ERROR: ANDROID_HOME is not set. Install SDK first."
             exit 1
           fi
-        else
-          echo "Emulator already running: $ONLINE_DEVICE"
-        fi
+          sdkmanager --list
 
-run-smoke-tests-android:
-  runs-on: self-hosted
-  needs: setup-android
-  steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Start Emulator if not running
+        run: |
+          DEVICE_NAME="Pixel_9_Pro_API_35"
+          ONLINE_DEVICE=$(adb devices | awk 'NR>1 && $2=="device"{print $1}')
+          if [ -z "$ONLINE_DEVICE" ]; then
+            echo "Starting emulator $DEVICE_NAME..."
+            emulator -avd $DEVICE_NAME -no-window -gpu swiftshader_indirect -noaudio &
+            timeout=300
+            while [ $timeout -gt 0 ]; do
+              BOOT_COMPLETED=$(adb -s emulator-5554 shell getprop sys.boot_completed 2>/dev/null)
+              if [ "$BOOT_COMPLETED" == "1" ]; then
+                echo "Emulator booted!"
+                break
+              fi
+              sleep 5
+              timeout=$((timeout-5))
+            done
+            if [ "$BOOT_COMPLETED" != "1" ]; then
+              echo "ERROR: Emulator did not boot in time"
+              exit 1
+            fi
+          else
+            echo "Emulator already running: $ONLINE_DEVICE"
+          fi
 
-    - name: Run Smoke Tests on Local Emulator
-      run: |
-        mkdir -p results
-        python -m robot -d results --include smoke tests/android
-        ls -l results
+  run-smoke-tests-android:
+    runs-on: self-hosted
+    needs: setup-android
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Run Smoke Tests on Local Emulator
+        run: |
+          mkdir -p results
+          python -m robot -d results --include smoke tests/android
+          ls -l results
+      - name: Upload Smoke Test Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-test-results-android
+          path: results/
 
-    - name: Upload Smoke Test Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: smoke-test-results-android
-        path: results/
-
-run-sanity-tests-android:
-  runs-on: self-hosted
-  needs: setup-android
-  steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Run Sanity Tests on Local Emulator
-      run: |
-        mkdir -p results
-        python -m robot -d results --include sanity tests/android
-        ls -l results
-
-    - name: Upload Sanity Test Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: sanity-test-results-android
-        path: results/
+  run-sanity-tests-android:
+    runs-on: self-hosted
+    needs: setup-android
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Run Sanity Tests on Local Emulator
+        run: |
+          mkdir -p results
+          python -m robot -d results --include sanity tests/android
+          ls -l results
+      - name: Upload Sanity Test Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sanity-test-results-android
+          path: results/
