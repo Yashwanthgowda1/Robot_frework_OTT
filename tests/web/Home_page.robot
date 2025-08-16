@@ -1,12 +1,14 @@
 *** Settings ***
-Library    ../../resource/library/common_web_andriod.py
-Resource    ../../resource/library/common_web.robot
-
+Resource  ../../resource/keywords/sigin.robot
 
 
 *** Test Cases ***
-Search Udemy On YouTube
-    [Tags]    smoke
-    Open Web Browser And Go To URL
+signin to orangeHRM
+    [Tags]  56754   smoke
+    Sign In
+    [Teardown]  Close Web Browser
+    
+
+
     
     
