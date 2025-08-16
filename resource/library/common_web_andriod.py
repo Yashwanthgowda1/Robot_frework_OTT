@@ -24,7 +24,9 @@ def load_locators(file_path):
 def initialize_driver(device_type="web", browser="chrome"):
     """Initialize driver once for web or Android."""
     global driver
-    if device_type.lower() in ["android", "real_device", 'emulator']:
+    # Remove quotes if they exist
+    device_type = device_type.strip('"').strip("'")
+    if device_type.lower() in ["android", "real_device", "emulator"]:
         driver = SetupUtility().connect_device(device_type=device_type)
     elif device_type.lower() == "web":
         driver = InitializeBrowser().initialize_browser(browser_name=browser)
@@ -104,3 +106,16 @@ def close_browser():
     if driver:
         driver.quit()
         driver = None
+        
+@keyword
+def quit_driver():
+        """Quit the driver if it's running."""
+        global driver
+        if driver:
+            try:
+                driver.quit()
+                print("[INFO] Driver quit successfully.")
+            except Exception as e:
+                print(f"[ERROR] Error while quitting driver: {e}")
+            finally:
+                driver = None
