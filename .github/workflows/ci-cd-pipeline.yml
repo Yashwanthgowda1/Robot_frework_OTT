@@ -47,6 +47,32 @@ jobs:
       - name: Install Chrome & Chromedriver
         uses: browser-actions/setup-chrome@v1
 
+  setup-andriod:
+    runs-on: ubuntu-latest
+    needs: setup-web
+    setps:
+      - name: setup emulator and sdk for virtual devices
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          arch: x86_64
+          force-avd-creation: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio
+          disable-animations: true
+          script: |
+            timeout=300
+            bootanim=""
+            while [[ "$timeout" -gt 0 ]]; do
+              bootanim=$(adb -e shell getprop init.svc.bootanim 2>/dev/null)
+              if [[ "$bootanim" == "stopped" ]]; then
+                echo "Emulator booted!"
+                break
+              fi
+              sleep 5
+              timeout=$((timeout-5))
+            done
+            adb devices
+
+
   run-smoke-tests:
     runs-on: ubuntu-latest
     needs: setup-web
