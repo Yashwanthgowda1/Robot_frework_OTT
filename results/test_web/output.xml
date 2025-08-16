@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.6 on win32)" generated="2025-08-15T14:22:39.218022" rpa="false" schemaversion="5">
+<suite id="s1" name="Home page" source="C:\python_study\OTT_platform\Robot_frework_OTT\tests\web\Home_page.robot">
+<test id="s1-t1" name="Search Udemy On YouTube" line="8">
+<kw name="Open Web Browser And Go To URL" owner="common_web">
+<kw name="Initialize Driver" owner="common_web_andriod">
+<msg time="2025-08-15T14:22:41.120089" level="INFO">${driver} = &lt;selenium.webdriver.chrome.webdriver.WebDriver (session="590d9208dc715bbe2c45ceb2fff93c94")&gt;</msg>
+<var>${driver}</var>
+<arg>device_type=web</arg>
+<arg>browser=${BROWSER}</arg>
+<doc>Initialize driver once for web or Android.</doc>
+<status status="PASS" start="2025-08-15T14:22:39.476413" elapsed="1.643735"/>
+</kw>
+<kw name="Go To Url" owner="common_web_andriod">
+<arg>${URL}</arg>
+<doc>Navigate to the given URL using Selenium driver.</doc>
+<status status="PASS" start="2025-08-15T14:22:41.120310" elapsed="3.836811"/>
+</kw>
+<status status="PASS" start="2025-08-15T14:22:39.476004" elapsed="5.481430"/>
+</kw>
+<tag>smoke</tag>
+<status status="PASS" start="2025-08-15T14:22:39.475263" elapsed="5.482653"/>
+</test>
+<status status="PASS" start="2025-08-15T14:22:39.219511" elapsed="5.739620"/>
+</suite>
+<statistics>
+<total>
+<stat pass="1" fail="0" skip="0">All Tests</stat>
+</total>
+<tag>
+<stat pass="1" fail="0" skip="0">smoke</stat>
+</tag>
+<suite>
+<stat name="Home page" id="s1" pass="1" fail="0" skip="0">Home page</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2025-08-15T14:22:39.474164" level="WARN">Imported library 'C:\python_study\OTT_platform\Robot_frework_OTT\resource\library\initialize_browser.py' contains no keywords.</msg>
+</errors>
+</robot>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.5 on win32)" generated="2025-08-16T10:55:42.197265" rpa="false" schemaversion="5">
+<suite id="s1" name="Home page" source="D:\OTT\Robot_frework_OTT\tests\web\Home_page.robot">
+<test id="s1-t1" name="Search Udemy On YouTube" line="8">
+<kw name="Open Web Browser And Go To URL" owner="common_web">
+<kw name="Initialize Driver" owner="common_web_andriod">
+<msg time="2025-08-16T10:55:46.882453" level="INFO">${driver} = &lt;selenium.webdriver.chrome.webdriver.WebDriver (session="b65d0604c6af0914d89c907d1af15520")&gt;</msg>
+<var>${driver}</var>
+<arg>device_type=web</arg>
+<arg>browser=${BROWSER}</arg>
+<doc>Initialize driver once for web or Android.</doc>
+<status status="PASS" start="2025-08-16T10:55:42.640828" elapsed="4.241708"/>
+</kw>
+<kw name="Go To Url" owner="common_web_andriod">
+<arg>${URL}</arg>
+<doc>Navigate to the given URL using Selenium driver.</doc>
+<status status="PASS" start="2025-08-16T10:55:46.883208" elapsed="2.616697"/>
+</kw>
+<status status="PASS" start="2025-08-16T10:55:42.640192" elapsed="6.860083"/>
+</kw>
+<tag>smoke</tag>
+<status status="PASS" start="2025-08-16T10:55:42.639581" elapsed="6.862447"/>
+</test>
+<status status="PASS" start="2025-08-16T10:55:42.198701" elapsed="7.304493"/>
+</suite>
+<statistics>
+<total>
+<stat pass="1" fail="0" skip="0">All Tests</stat>
+</total>
+<tag>
+<stat pass="1" fail="0" skip="0">smoke</stat>
+</tag>
+<suite>
+<stat name="Home page" id="s1" pass="1" fail="0" skip="0">Home page</stat>
+</suite>
+</statistics>
+<errors>
+</errors>
+</robot>
