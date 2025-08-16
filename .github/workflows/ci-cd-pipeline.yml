@@ -9,9 +9,9 @@ on:
       - main
   schedule:
     # Smoke tests daily at 10:08 AM
-    - cron: "8 10 * * *"
+    - cron: "10 11 * * *"
     # Sanity tests every 2 days at 10:08 AM
-    - cron: "8 10 */2 * *"
+    - cron: "10 11 */2 * *"
 
 jobs:
   checkout-code:
