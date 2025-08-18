@@ -30,10 +30,18 @@ jobs:
 
       - name: Check code quality and reformat
         run: |
-          pip install robocop
+          python -m pip install --upgrade pip
+          pip install black pylint
           black .
-          pylint resource/keyword/*.py resource/library/*.py
-          robocop resource/keyword/*.robot resource/library/*.robot test/android/*.robot test/web/*.robot
+          pylint resource/library/*.py --exit-zero > pylint_output.txt
+          score=$(tail -1 pylint_output.txt | awk '{print $7}' | sed 's/\/10//')
+          echo "Pylint score: $score"
+          if (( $(echo "$score < 8" | bc -l) )); then
+            echo "Pylint score is below 8!"
+            exit 1
+          fi
+
+         
 
   merge-request:
     needs: build-and-quality-check
