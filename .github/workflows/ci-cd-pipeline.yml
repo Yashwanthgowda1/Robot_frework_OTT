@@ -11,6 +11,7 @@ on:
     - cron: "0 0 * * *"   # Daily at midnight
     - cron: "0 */1 * * *" # Every hour
 
+
 jobs:
   build-and-quality-check: 
     runs-on: ubuntu-latest
