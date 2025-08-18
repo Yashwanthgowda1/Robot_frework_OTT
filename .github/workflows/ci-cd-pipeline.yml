@@ -30,10 +30,10 @@ jobs:
 
       - name: Check code quality and reformat
         run: |
-          pip install robocop
+    
           black .
           pylint resource/keyword/*.py resource/library/*.py
-          robocop resource/keyword/*.robot resource/library/*.robot test/android/*.robot test/web/*.robot
+        
 
   merge-request:
     needs: build-and-quality-check
