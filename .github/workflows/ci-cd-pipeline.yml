@@ -1,6 +1,6 @@
-name: CI-CD Pipeline
+name: CI CD Pipeline for OTT Platform
 
-on:
+on: 
   push:
     branches:
       - main
@@ -8,149 +8,112 @@ on:
     branches:
       - main
   schedule:
-    - cron: "0 0 * * *"       # Smoke tests daily
-    - cron: "0 1 */2 * *"     # Sanity tests every 2 days
-  workflow_dispatch:           # optional manual trigger
+    - cron: "0 0 * * *"   # Daily at midnight
+    - cron: "0 */1 * * *" # Every hour
 
 jobs:
-  # -----------------------
-  # WEB TESTS (GitHub-hosted runner on Ubuntu)
-  # -----------------------
-  checkout-code-web:
+  build-and-quality-check: 
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-  install-dependencies-web:
-    runs-on: ubuntu-latest
-    needs: checkout-code-web
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v2
         with:
-          python-version: '3.13'
+          python-version: '3.11'
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-  setup-web:
+      - name: Check code quality and reformat
+        run: |
+          pip install robocop
+          black .
+          pylint resource/keyword/*.py resource/library/*.py
+          robocop resource/keyword/*.robot resource/library/*.robot test/android/*.robot test/web/*.robot
+
+  merge-request:
+    needs: build-and-quality-check
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    needs: install-dependencies-web
+    steps:
+      - name: Wait for manual approval before merge
+        uses: trstringer/manual-approval@v1
+        with:
+          approvers: Yashwanthgowda1
+          minimum-approvals: 1
+
+  set-up-web:
+    needs: merge-request
+    runs-on: ubuntu-latest
     steps:
       - name: Install Chrome & Chromedriver
         uses: browser-actions/setup-chrome@v1
-
-  run-smoke-tests-web:
-    runs-on: ubuntu-latest
-    needs: setup-web
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Run Smoke Tests (Web)
-        if: github.event_name == 'schedule' && github.event.schedule == '0 0 * * *'
-        run: |
-          mkdir -p results
-          python -m robot -d results --include smoke tests/web
-      - name: Upload Smoke Test Artifacts (Web)
-        uses: actions/upload-artifact@v4
         with:
-          name: smoke-test-results-web
-          path: results/
+          chromedriver-version: 'latest'
 
-  run-sanity-tests-web:
+  run-robot-code-for-web:
+    needs: set-up-web
     runs-on: ubuntu-latest
-    needs: setup-web
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Run Sanity Tests (Web)
-        if: github.event_name == 'schedule' && github.event.schedule == '0 1 */2 * *'
-        run: |
-          mkdir -p results
-          python -m robot -d results --include sanity tests/web
-      - name: Upload Sanity Test Artifacts (Web)
-        uses: actions/upload-artifact@v4
-        with:
-          name: sanity-test-results-web
-          path: results/
+      - name: Ensure results folder exists
+        run: mkdir -p results/web
 
-  # -----------------------
-  # ANDROID TESTS (Self-hosted runner)
-  # -----------------------
-  setup-android:
-    runs-on: self-hosted
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Verify Android SDK is installed
+      - name: Run Robot Framework smoke tests
         run: |
-          echo "Checking ANDROID_HOME..."
-          if [ -z "$ANDROID_HOME" ]; then
-            echo "ERROR: ANDROID_HOME is not set. Install SDK first."
-            exit 1
+          TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')
+          if [[ "${{ github.event_name }}" == "schedule" && "${{ github.event.schedule }}" == "0 0 * * *" ]]; then
+            robot --outputdir results/web/$TIMESTAMP --include smoke tests/web
           fi
-          sdkmanager --list
 
-      - name: Start Emulator if not running
+      - name: Upload web test results to artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: web-test-results
+          path: results/web
+
+  set-up-android:
+    needs: run-robot-code-for-web
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify SDK Path
         run: |
-          DEVICE_NAME="Pixel_9_Pro_API_35"
-          ONLINE_DEVICE=$(adb devices | awk 'NR>1 && $2=="device"{print $1}')
-          if [ -z "$ONLINE_DEVICE" ]; then
-            echo "Starting emulator $DEVICE_NAME..."
-            emulator -avd $DEVICE_NAME -no-window -gpu swiftshader_indirect -noaudio &
-            timeout=300
-            while [ $timeout -gt 0 ]; do
-              BOOT_COMPLETED=$(adb -s emulator-5554 shell getprop sys.boot_completed 2>/dev/null)
-              if [ "$BOOT_COMPLETED" == "1" ]; then
-                echo "Emulator booted!"
-                break
-              fi
-              sleep 5
-              timeout=$((timeout-5))
-            done
-            if [ "$BOOT_COMPLETED" != "1" ]; then
-              echo "ERROR: Emulator did not boot in time"
-              exit 1
-            fi
+          echo "ANDROID_HOME = $ANDROID_HOME"
+          echo "Listing AVDs..."
+          $ANDROID_HOME/emulator/emulator -list-avds
+
+      - name: Detect Running Emulator
+        run: |
+          echo "Checking for running Android emulator..."
+          RUNNING_EMU=$(adb devices | findstr "emulator")
+          if [ -n "$RUNNING_EMU" ]; then
+            echo "Emulator already running: $RUNNING_EMU"
           else
-            echo "Emulator already running: $ONLINE_DEVICE"
+            echo "No emulator running. Starting a new one..."
+            EMULATOR_NAME=$($ANDROID_HOME/emulator/emulator -list-avds | head -n 1)
+            echo "Starting emulator: $EMULATOR_NAME"
+            nohup $ANDROID_HOME/emulator/emulator -avd $EMULATOR_NAME -no-snapshot -noaudio -no-boot-anim -netdelay none -netspeed full &
           fi
 
-  run-smoke-tests-android:
-    runs-on: self-hosted
-    needs: setup-android
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Run Smoke Tests on Local Emulator
+      - name: Wait for Emulator Boot
         run: |
-          mkdir -p results
-          python -m robot -d results --include smoke tests/android
-          ls -l results
-      - name: Upload Smoke Test Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: smoke-test-results-android
-          path: results/
+          adb wait-for-device
+          until [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = "1" ]; do
+            sleep 5
+          done
+          echo "Emulator is ready."
 
-  run-sanity-tests-android:
-    runs-on: self-hosted
-    needs: setup-android
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Run Sanity Tests on Local Emulator
+      - name: Run Android Tests
         run: |
-          mkdir -p results
-          python -m robot -d results --include sanity tests/android
-          ls -l results
-      - name: Upload Sanity Test Artifacts
-        uses: actions/upload-artifact@v4
+          TIMESTAMP_ANDROID=$(date +'%Y-%m-%d_%H-%M-%S')
+          robot --outputdir results/android/$TIMESTAMP_ANDROID tests/android
+
+      - name: Upload Android Test Results to artifacts
+        uses: actions/upload-artifact@v2
         with:
-          name: sanity-test-results-android
-          path: results/
+          name: android-test-results
+          path: results/android
